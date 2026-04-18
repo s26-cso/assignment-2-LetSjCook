@@ -1,5 +1,6 @@
 .section .data
-fmt: .string "%ld "        # format string for printing numbers
+fmt_space: .string "%ld "      # format string for printing numbers with a space
+fmt_nl:    .string "%ld\n"     # format string for printing the last number with a newline
 
 .section .text
 .globl main
@@ -112,9 +113,18 @@ loop:
     addi t2, t2, 80        
     ld a1, 0(t2)           # load result[i]
 
-    la a0, fmt             # load format string
+    addi t3, s2, -1        # calculate index of the last element (n - 1)
+    beq t0, t3, print_nl   # if i == n - 1, print with newline instead of space
+
+    la a0, fmt_space       # load format string with space
+    call printf            # print value
+    j next_iter
+
+print_nl:
+    la a0, fmt_nl          # load format string with newline
     call printf            # print value
 
+next_iter:
     addi t0, t0, 1         # i++
     j loop                 # repeat
 
