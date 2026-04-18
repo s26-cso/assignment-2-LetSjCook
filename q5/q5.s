@@ -1,72 +1,89 @@
 .section .data
-fname:  .asciz "input.txt"     # file name to open
-yesmsg: .asciz "Yes\n"         # message if palindrome
-nomsg:  .asciz "No\n"          # message if not palindrome
+fname:  .asciz "input.txt"
+yesmsg: .asciz "Yes\n"
+nomsg:  .asciz "No\n"
 
 .section .bss
-buf: .skip 1024                # buffer to store file contents
+buf: .skip 1024
 
 .section .text
 .globl main
 main:
 
-    li a0, -100                # special value for current directory
-    la a1, fname               # pointer to file name
-    li a2, 0                   # open mode (read only)
-    li a3, 0                   # flags (unused here)
-    li a7, 56                  # syscall: openat
-    ecall                      # make syscall
-    mv s0, a0                  # save file descriptor
+    li a0, -100
+    la a1, fname
+    li a2, 0
+    li a3, 0
+    li a7, 56
+    ecall
+    mv s0, a0
 
-    bltz s0, print_no          # if fd < 0, file open failed
+    bltz s0, print_no
 
-    mv a0, s0                  # file descriptor
-    la a1, buf                 # buffer address
-    li a2, 1024                # max bytes to read
-    li a7, 63                  # syscall: read
-    ecall                      # read file
-    mv s1, a0                  # number of bytes read
+    mv a0, s0
+    la a1, buf
+    li a2, 1024
+    li a7, 63
+    ecall
+    mv s1, a0
 
-    mv a0, s0                  # file descriptor
-    li a7, 57                  # syscall: close
-    ecall                      # close file
+    mv a0, s0
+    li a7, 57
+    ecall
 
-    li t0, 0                   # left index = 0
-    addi t1, s1, -1            # right index = size - 1
+    beqz s1, print_yes
+
+    li t0, 0
+    addi t1, s1, -1
+
+    la t2, buf
+    add t3, t2, t1
+    lb t4, 0(t3)
+    li t5, '\n'
+    bne t4, t5, check_cr
+    addi t1, t1, -1
+
+check_cr:
+    la t2, buf
+    add t3, t2, t1
+    lb t4, 0(t3)
+    li t5, '\r'
+    bne t4, t5, check_loop
+    addi t1, t1, -1
 
 check_loop:
-    bge t0, t1, print_yes      # if pointers cross, it's palindrome
+    bge t0, t1, print_yes
 
-    la t2, buf                 # base address of buffer
-    add t3, t2, t0             # address of left char
-    lb t4, 0(t3)               # load left character
+    la t2, buf
+    add t3, t2, t0
+    lb t4, 0(t3)
 
-    la t2, buf                 # base address again
-    add t3, t2, t1             # address of right char
-    lb t5, 0(t3)               # load right character
+    la t2, buf
+    add t3, t2, t1
+    lb t5, 0(t3)
 
-    bne t4, t5, print_no       # if mismatch, not palindrome
+    bne t4, t5, print_no
 
-    addi t0, t0, 1             # move left pointer right
-    addi t1, t1, -1            # move right pointer left
-    j check_loop               # repeat loop
+    addi t0, t0, 1
+    addi t1, t1, -1
+    j check_loop
 
 print_yes:
-    li a0, 1                   # file descriptor (stdout)
-    la a1, yesmsg              # message address
-    li a2, 4                   # length of "Yes\n"
-    li a7, 64                  # syscall: write
-    ecall                      # print Yes
-    j exit                     # go to exit
+    li a0, 1
+    la a1, yesmsg
+    li a2, 4
+    li a7, 64
+    ecall
+    j exit
 
 print_no:
-    li a0, 1                   # file descriptor (stdout)
-    la a1, nomsg               # message address
-    li a2, 3                   # length of "No\n"
-    li a7, 64                  # syscall: write
-    ecall                      # print No
+    li a0, 1
+    la a1, nomsg
+    li a2, 3
+    li a7, 64
+    ecall
 
 exit:
-    li a0, 0                   # exit code
-    li a7, 93                  # syscall: exit
-    ecall                      # terminate program
+    li a0, 0
+    li a7, 93
+    ecall
