@@ -7,9 +7,8 @@ nomsg:  .asciz "No\n"          # message if not palindrome
 buf: .skip 1024                # buffer to store file contents
 
 .section .text
-.globl _start
-
-_start:
+.globl main
+main:
 
     li a0, -100                # special value for current directory
     la a1, fname               # pointer to file name
@@ -71,4 +70,3 @@ exit:
     li a0, 0                   # exit code
     li a7, 93                  # syscall: exit
     ecall                      # terminate program
-    
